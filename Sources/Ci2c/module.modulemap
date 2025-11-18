@@ -1,0 +1,11 @@
+//
+//  module.modulemap
+//
+//  Copyright © 2025 Nick Nallick. Licensed under the MIT License.
+//
+
+module Ci2c [system] {
+    header "/usr/include/i2c/smbus.h"
+    link "i2c"
+    export *
+}
