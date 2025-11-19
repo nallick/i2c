@@ -16,7 +16,7 @@ let package = Package(
         ),
         .target(
             name: "i2c",
-            dependencies: [ .byNameItem(name: "Ci2c", condition: nil)],//.when(platforms: [.linux])), ],
+            dependencies: [ .byNameItem(name: "Ci2c", condition: .when(platforms: [.linux])) ],
             swiftSettings: [.strictMemorySafety()],
         ),
     ]
