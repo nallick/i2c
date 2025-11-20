@@ -79,7 +79,15 @@ public actor I2CBus {
         return UInt8(truncatingIfNeeded: result)
     }
 
-    public func readInt16(from address: Int, command: UInt8) throws -> Int16 {
+    @inlinable public func readInt8(from address: Int, command: UInt8) throws -> Int8 {
+        Int8(bitPattern: try read(from: address, command: command))
+    }
+
+    @inlinable public func readUInt8(from address: Int, command: UInt8) throws -> UInt8 {
+        try read(from: address, command: command)
+    }
+
+    @inlinable public func readInt16(from address: Int, command: UInt8) throws -> Int16 {
         Int16(bitPattern: try readUInt16(from: address, command: command))
     }
 
