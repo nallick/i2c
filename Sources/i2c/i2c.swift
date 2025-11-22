@@ -108,10 +108,10 @@ public actor I2CBus {
 
     public func readUInt24(from address: Int, command: UInt8) throws -> UInt32 {
         var data = Data(repeating: 0, count: 4)
-        data[3] = try read(from: address, command: command)
-        data[2] = try read(from: address)
+        data[2] = try read(from: address, command: command)
         data[1] = try read(from: address)
-        return unsafe data.withUnsafeBytes({ unsafe $0.bindMemory(to: UInt32.self).baseAddress?.pointee })! >> 8
+        data[0] = try read(from: address)
+        return unsafe data.withUnsafeBytes({ unsafe $0.bindMemory(to: UInt32.self).baseAddress?.pointee })!
     }
 
     public func readBlock(from address: Int, command: UInt8) throws -> [UInt8] {
