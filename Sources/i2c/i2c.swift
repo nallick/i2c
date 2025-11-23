@@ -114,6 +114,19 @@ public actor I2CBus {
         return unsafe data.withUnsafeBytes({ unsafe $0.bindMemory(to: UInt32.self).baseAddress?.pointee })!
     }
 
+    @inlinable public func readInt32(from address: Int, command: UInt8) throws -> Int32 {
+        Int32(bitPattern: try readUInt32(from: address, command: command))
+    }
+
+    public func readUInt32(from address: Int, command: UInt8) throws -> UInt32 {
+        var data = Data(repeating: 0, count: 4)
+        data[3] = try read(from: address, command: command)
+        data[2] = try read(from: address)
+        data[1] = try read(from: address)
+        data[0] = try read(from: address)
+        return unsafe data.withUnsafeBytes({ unsafe $0.bindMemory(to: UInt32.self).baseAddress?.pointee })!
+    }
+
     public func readBlock(from address: Int, command: UInt8) throws -> [UInt8] {
         try set(slaveAddress: address)
         var buffer = [UInt8](repeating: 0, count: payloadLength)
