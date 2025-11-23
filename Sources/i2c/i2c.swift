@@ -28,11 +28,11 @@ import Foundation
 
 public actor I2CBus {
 
-    private let deviceIdentifier: Int
+    public let deviceIdentifier: Int
+    public static let defaultBlockLength = 32   // prior to kernel 2.6.22 this was the only supported block length
 
     private var fileDescriptor: Int32 = -1
     private var slaveAddress = -1
-    private let payloadLength = 32
 
     public init(device identifier: Int = 1) {
         self.deviceIdentifier = identifier
@@ -129,15 +129,19 @@ public actor I2CBus {
 
     public func readBlock(from address: Int, command: UInt8) throws -> [UInt8] {
         try set(slaveAddress: address)
-        var buffer = [UInt8](repeating: 0, count: payloadLength)
-        guard unsafe i2c_smbus_read_block_data(fileDescriptor, command, &buffer) >= 0 else { throw Failure(.read, detail: "I2C read block failed") }
+        var buffer = [UInt8](repeating: 0, count: Self.defaultBlockLength)
+        let count = unsafe i2c_smbus_read_block_data(fileDescriptor, command, &buffer)
+        guard count >= 0 else { throw Failure(.read, detail: "I2C read block failed") }
+        buffer.removeLast(Self.defaultBlockLength - Int(count))
         return buffer
     }
 
-    public func readI2CBlock(from address: Int, command: UInt8) throws -> [UInt8] {
+    public func readI2CBlock(from address: Int, command: UInt8, length: Int = defaultBlockLength) throws -> [UInt8] {
         try set(slaveAddress: address)
-        var buffer = [UInt8](repeating: 0, count: payloadLength)
-        guard unsafe i2c_smbus_read_i2c_block_data(fileDescriptor, command, UInt8(payloadLength), &buffer) >= 0 else { throw Failure(.read, detail: "I2C read i2c block failed") }
+        var buffer = [UInt8](repeating: 0, count: length)
+        let count = unsafe i2c_smbus_read_i2c_block_data(fileDescriptor, command, UInt8(length), &buffer)
+        guard count >= 0 else { throw Failure(.read, detail: "I2C read i2c block failed") }
+        buffer.removeLast(length - Int(count))
         return buffer
     }
 
@@ -163,12 +167,14 @@ public actor I2CBus {
 
     public func writeBlock(to address: Int, command: UInt8, values: [UInt8]) throws {
         try set(slaveAddress: address)
-        guard unsafe i2c_smbus_write_block_data(fileDescriptor, command, UInt8(values.count), values) >= 0 else { throw Failure(.write, detail: "I2C write block failed") }
+        let count = unsafe i2c_smbus_write_block_data(fileDescriptor, command, UInt8(values.count), values)
+        guard Int(count) == values.count else { throw Failure(.write, detail: "I2C write block failed") }
     }
 
     public func writeI2CBlock(to address: Int, command: UInt8, values: [UInt8]) throws {
         try set(slaveAddress: address)
-        guard unsafe i2c_smbus_write_i2c_block_data(fileDescriptor, command, UInt8(values.count), values) >= 0 else { throw Failure(.write, detail: "I2C write i2c block failed") }
+        let count = unsafe i2c_smbus_write_i2c_block_data(fileDescriptor, command, UInt8(values.count), values)
+        guard Int(count) == values.count else { throw Failure(.write, detail: "I2C write i2c block failed") }
     }
 
     public func set(pec address: Int, enabled: Bool) throws {
